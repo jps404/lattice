@@ -1,0 +1,62 @@
+name: Daily LegiScan Poll + Analysis
+
+on:
+  schedule:
+    # Run daily at 6 AM CT (11 AM UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  poll-and-analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Sync new bills from LegiScan
+        env:
+          LEGISCAN_API_KEY: ${{ secrets.LEGISCAN_API_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python db/seed.py
+
+      - name: Run AI analysis on new bills
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python scripts/run_analysis.py --batch
+
+      - name: Generate embeddings for new bills
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python scripts/generate_embeddings.py
+
+      - name: Sync campaign finance data
+        env:
+          FOLLOWTHEMONEY_API_KEY: ${{ secrets.FOLLOWTHEMONEY_API_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python -c "from ingestion.campaign_finance import FollowTheMoneyClient; FollowTheMoneyClient().sync_all_legislators()"
+
+      - name: Run money trail analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python -c "from analysis.money_trail import run_all_money_trails; print(run_all_money_trails())"
+
+      - name: Run conflict detection
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: uv run python -c "from analysis.conflict_detector import run_full_conflict_scan; print(run_full_conflict_scan())"
+
+      - name: Update predictions
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          uv run python -c "from analysis.predictor import update_outcomes, predict_all_bills; update_outcomes(); predict_all_bills()"

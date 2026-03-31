@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+build/
+.streamlit/secrets.toml
+*.pkl
+Contributions_2024_to_2027.csv
+predictor_model.pkl
