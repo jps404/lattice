@@ -8,7 +8,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from components.sidebar import render_sidebar
-from components.theme import t, src, footer
+from components.theme import t, src, footer, page_head
 from ingestion.db import get_connection, get_cursor
 
 st.set_page_config(page_title="Legislators — LATTICE", layout="wide")
@@ -67,11 +67,7 @@ def fetch_bills(leg_id):
     return rows
 
 
-st.markdown("""
-<p style="font-size:0.6rem;color:#a8a29e;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;">LATTICE</p>
-<h1 style="font-size:2rem;margin-bottom:0.15rem;">Legislators</h1>
-<p style="color:#78716c;font-size:0.85rem;margin-bottom:1.25rem;">Campaign donors, sponsored bills, and financial profiles</p>
-""", unsafe_allow_html=True)
+st.markdown(page_head("Legislators", "Campaign donors, sponsored bills, and financial profiles"), unsafe_allow_html=True)
 
 c1, c2 = st.columns([3, 1])
 with c1: search = st.text_input("Search", placeholder="Name or district…", label_visibility="collapsed")

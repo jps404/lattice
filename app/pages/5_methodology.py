@@ -6,12 +6,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 from components.sidebar import render_sidebar
-from components.theme import page_header
+from components.theme import page_head, footer
 
-st.set_page_config(page_title="Methodology — LATTICE", layout="wide")
+st.set_page_config(page_title="Methodology — {L.A}TTICE", layout="wide")
 render_sidebar()
 
-st.markdown(page_header("Methodology", "Research design, data sources, and analytical procedures"), unsafe_allow_html=True)
+st.markdown(page_head("Methodology", "Research design, data sources, and analytical procedures"), unsafe_allow_html=True)
 
 st.markdown("""
 <div style="max-width:720px;">

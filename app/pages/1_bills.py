@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import json
 import streamlit as st
 from components.sidebar import render_sidebar
-from components.theme import t, src, footer
+from components.theme import t, src, footer, page_head
 from ingestion.db import get_connection, get_cursor
 
 st.set_page_config(page_title="Bills — LATTICE", layout="wide")
@@ -44,11 +44,7 @@ def fetch_all(q, sf):
     return rows
 
 
-st.markdown("""
-<p style="font-size:0.6rem;color:#a8a29e;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;">LATTICE</p>
-<h1 style="font-size:2rem;margin-bottom:0.15rem;">Bills</h1>
-<p style="color:#78716c;font-size:0.85rem;margin-bottom:1.25rem;">What each bill actually does, in plain English</p>
-""", unsafe_allow_html=True)
+st.markdown(page_head("Bills", "What each bill actually does, in plain English"), unsafe_allow_html=True)
 
 c1, c2, c3, c4 = st.columns([3, 1, 1, 1])
 with c1: q = st.text_input("s", placeholder="Search bills…", label_visibility="collapsed")
@@ -113,6 +109,16 @@ with tab1:
                         st.caption("Who is harmed"); st.write(b["who_is_harmed"])
                 if b.get("url"):
                     st.markdown(f"[Read original text →]({b['url']})")
+
+    # CSV export
+    if bills:
+        import pandas as pd
+        df = pd.DataFrame([{
+            "bill_number": b["bill_number"], "title": b["title"], "status": b["current_status"],
+            "plain_english": b.get("plain_english",""), "policy_area": b.get("policy_area",""),
+            "controversy": b.get("controversy_score",0), "pass_probability": b.get("pass_probability"),
+        } for b in bills])
+        st.download_button("Export CSV", df.to_csv(index=False), "lattice_bills.csv", "text/csv")
 
 with tab2:
     all_b = fetch_all(q, sf)
