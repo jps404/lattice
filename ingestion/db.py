@@ -4,6 +4,7 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+# Load .env for local dev — silently skip on Streamlit Cloud
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -11,27 +12,24 @@ except Exception:
     pass
 
 
-def _get_db_url():
-    """Get database URL from env vars or Streamlit secrets."""
-    # Try environment variable first (local dev)
+def get_connection():
+    """Return a psycopg2 connection to the Supabase PostgreSQL database."""
+    # 1. Try environment variable (local dev with .env)
     url = os.environ.get("SUPABASE_DB_URL")
     if url:
-        return url
-    # Try Streamlit secrets (cloud deployment)
+        return psycopg2.connect(url)
+
+    # 2. Try Streamlit secrets (cloud deployment)
     try:
         import streamlit as st
         if "SUPABASE_DB_URL" in st.secrets:
-            return st.secrets["SUPABASE_DB_URL"]
-        if "db" in st.secrets:
-            return st.secrets["db"]["url"]
+            return psycopg2.connect(st.secrets["SUPABASE_DB_URL"])
+        if "db" in st.secrets and "url" in st.secrets["db"]:
+            return psycopg2.connect(st.secrets["db"]["url"])
     except Exception:
         pass
-    raise RuntimeError("Database URL not found")
 
-
-def get_connection():
-    """Return a psycopg2 connection to the Supabase PostgreSQL database."""
-    return psycopg2.connect(_get_db_url())
+    raise RuntimeError("No database URL found")
 
 
 def get_cursor(conn):
