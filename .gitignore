@@ -9,3 +9,4 @@ build/
 *.pkl
 Contributions_2024_to_2027.csv
 predictor_model.pkl
+.github/workflows/
