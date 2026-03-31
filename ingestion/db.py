@@ -13,14 +13,22 @@ except ImportError:
 
 def _get_db_url():
     """Get database URL from env vars or Streamlit secrets."""
+    # Try environment variable first (local dev)
     url = os.environ.get("SUPABASE_DB_URL")
     if url:
         return url
+    # Try Streamlit secrets (cloud deployment)
     try:
         import streamlit as st
-        return st.secrets["SUPABASE_DB_URL"]
+        # Try flat key first
+        if "SUPABASE_DB_URL" in st.secrets:
+            return st.secrets["SUPABASE_DB_URL"]
+        # Try nested [db] section
+        if "db" in st.secrets:
+            return st.secrets["db"]["url"]
     except Exception:
-        raise RuntimeError("SUPABASE_DB_URL not found in environment or Streamlit secrets")
+        pass
+    raise RuntimeError("Database URL not found in environment or Streamlit secrets")
 
 
 def get_connection():
