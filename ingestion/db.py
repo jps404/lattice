@@ -7,7 +7,7 @@ from psycopg2.extras import RealDictCursor
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except Exception:
     pass
 
 
@@ -20,15 +20,13 @@ def _get_db_url():
     # Try Streamlit secrets (cloud deployment)
     try:
         import streamlit as st
-        # Try flat key first
         if "SUPABASE_DB_URL" in st.secrets:
             return st.secrets["SUPABASE_DB_URL"]
-        # Try nested [db] section
         if "db" in st.secrets:
             return st.secrets["db"]["url"]
     except Exception:
         pass
-    raise RuntimeError("Database URL not found in environment or Streamlit secrets")
+    raise RuntimeError("Database URL not found")
 
 
 def get_connection():
